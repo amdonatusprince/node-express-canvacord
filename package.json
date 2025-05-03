@@ -1,0 +1,47 @@
+{
+  "name": "template-node-express",
+  "version": "1.0.0",
+  "description": "Node.js Express API with the Solana Gill SDK",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "ci": "npm run build",
+    "dev": "esrun --watch src/index.ts",
+    "docker:build": "docker build -t template-node-express:latest .",
+    "docker:run": "docker run --rm --name template-node-express -p 3000:3000 --env-file .env -e SOLANA_SIGNER_PATH=keypair-signer.json -v ./keypair-signer.json:/srv/api/keypair-signer.json template-node-express:latest",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
+    "setup": "npm run setup-env && npm run setup-keypair-signer",
+    "setup-env": "shx test -e .env || shx cp .env.example .env",
+    "setup-keypair-signer": "shx test -e keypair-signer.json || solana-keygen new --no-bip39-passphrase --outfile keypair-signer.json",
+    "lint": "eslint .",
+    "start": "node ./dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.25.1",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.3",
+    "eslint": "^9.25.1",
+    "esrun": "^3.2.26",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.31.0"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.17",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "gill": "0.8.3",
+    "kleur": "^4.1.5",
+    "lru-cache": "^11.1.0",
+    "shx": "^0.4.0",
+    "ws": "^8.18.1",
+    "zod": "^3.24.3"
+  }
+}
