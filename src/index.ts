@@ -7,6 +7,7 @@ import { getApiContext } from './lib/get-api-context.js'
 import { getSolanaBalance } from './lib/get-solana-balance.js'
 import { getSolanaCachedBlockhash } from './lib/get-solana-cached-blockhash.js'
 import { getSolanaCluster } from './lib/get-solana-cluster.js'
+import { createImageSolanaBalance } from './lib/create-image-solana-balance.js'
 
 const app = express()
 const { port, ...config } = getApiConfig()
@@ -36,6 +37,31 @@ app.get('/balance/:address', async (req, res) => {
       return
     }
     res.json(successResponse(balance))
+  } catch (error) {
+    context.log.error(`Error getting balance for address ${req.params.address}`, error)
+    res.status(500).json(errorResponse('Error getting balance', 'BALANCE_ERROR'))
+  }
+})
+
+app.get('/balance/:address/image', async (req, res) => {
+  try {
+    const balance = await getSolanaBalance(context, req.params.address)
+    if (!balance) {
+      context.log.error(`Failed to retrieve balance for address: ${req.params.address}`)
+      res.status(500).json(errorResponse('Balance not retrieved', 'BALANCE_RETRIEVAL_FAILED'))
+      return
+    }
+    const image = await createImageSolanaBalance(balance)
+
+    if (!image) {
+      res.status(404).send('Not found')
+      return
+    }
+
+    res.setHeader('Content-Type', 'image/png')
+    res.setHeader('Cache-Control', 'no-store no-cache must-revalidate private max-age=0 s-maxage=0 proxy-revalidate')
+
+    res.send(image)
   } catch (error) {
     context.log.error(`Error getting balance for address ${req.params.address}`, error)
     res.status(500).json(errorResponse('Error getting balance', 'BALANCE_ERROR'))

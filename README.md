@@ -18,6 +18,12 @@ Install dependencies:
 pnpm install
 ```
 
+Set up the keypair signer (one time per machine):
+
+```shell
+pnpm run setup
+```
+
 Start the api:
 
 ```shell
