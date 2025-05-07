@@ -1,5 +1,8 @@
-import 'dotenv/config'
+import { config as dotenvConfig } from 'dotenv'
 import { z } from 'zod'
+
+// Initialize dotenv
+dotenvConfig()
 
 const ApiConfigSchema = z.object({
   corsOrigins: z.array(z.string()),
