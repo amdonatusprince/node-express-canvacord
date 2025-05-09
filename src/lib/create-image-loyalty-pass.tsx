@@ -1,4 +1,5 @@
 import { Builder, Font, FontFactory } from 'canvacord'
+import QRCode from 'qrcode'
 
 interface LoyaltyPassData {
   xp: number
@@ -6,6 +7,9 @@ interface LoyaltyPassData {
   name: string
   owner: string
   pass: string
+  lastAction: string | null
+  actionHistory: Array<any>
+  rewards: string[]
   metadata: {
     organizationName: string
     brandColor?: string
@@ -13,6 +17,7 @@ interface LoyaltyPassData {
   rewardTiers: Array<{
     name: string
     xpRequired: number
+    rewards: string[]
   }>
 }
 
@@ -23,7 +28,7 @@ class CreateImageLoyaltyPass extends Builder {
     },
   ) {
     // Set a larger size for the loyalty card
-    super(800, 400)
+    super(450, 600)
 
     // Load default font if none loaded
     if (!FontFactory.size) Font.loadDefault()
@@ -42,11 +47,24 @@ class CreateImageLoyaltyPass extends Builder {
     return [lighter, brandColor, darker]
   }
 
+  private formatNumber(num: number): string {
+    return num.toLocaleString('en-US', {
+      maximumFractionDigits: 0
+    })
+  }
+
   async render() {
     const { data } = this.vars
     const colors = this.getGradientColors(data.metadata.brandColor || '#ab9f90')
     const nextTier = data.rewardTiers.find(tier => tier.xpRequired > data.xp) || data.rewardTiers[0]
     const progress = (data.xp / nextTier.xpRequired) * 100
+    const qrCodeUrl = `https://verxio.xyz/pass/${data.pass}`
+    const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
+      width: 80,
+      margin: 1,
+      color: { dark: '#000000', light: '#ffffff' }
+    })
+    
 
     return (
       <div
@@ -55,7 +73,7 @@ class CreateImageLoyaltyPass extends Builder {
           flexDirection: 'column',
           width: '100%',
           height: '100%',
-          background: 'white',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e6e9f0 100%)',
           borderRadius: '20px',
           padding: '30px',
           color: '#333',
@@ -89,87 +107,185 @@ class CreateImageLoyaltyPass extends Builder {
           width: '100%'
         }}>
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h1 style={{ fontSize: '32px', margin: 0, color: colors[1] }}>{data.metadata.organizationName}</h1>
-            <div style={{ 
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', width: '100%' }}>
+            {/* Program Name and Organization */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <span style={{
+                fontFamily: 'Press Start 2P',
+                margin: '0 0 8px 0',
+                fontSize: '26px',
+                color: colors[1],
+                textShadow: `0 0 8px ${colors[1]}55`,
+                letterSpacing: '1px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '250px'
+              }}>{data.name}</span>
+              <span style={{
+                fontSize: '15px',
+                color: '#666',
+                marginTop: '2px',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: 360
+              }}>by {data.metadata.organizationName}</span>
+            </div>
+            <div style={{
               display: 'flex',
               background: colors[1],
               color: 'white',
-              padding: '8px 16px', 
+              padding: '8px 16px',
               borderRadius: '20px',
-              fontSize: '18px',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+              fontSize: '14px',
+              fontWeight: 600,
+              boxShadow: `0 4px 10px ${colors[1]}22`
             }}>
-              {data.currentTier} Tier
+              {data.currentTier.toUpperCase()}
             </div>
           </div>
 
-          {/* Card Content */}
+          {/* Pass Address */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
+            background: 'rgba(240,240,255,0.7)',
+            borderRadius: '10px',
+            padding: '16px',
+            marginBottom: '20px',
+            border: `1px solid ${colors[1]}22`,
+            boxShadow: '0 1px 4px #0001',
+            marginTop: 'auto'
+          }}>
+            <span style={{ fontSize: '10px', color: '#666', fontFamily: 'monospace', fontWeight: 500, wordBreak: 'break-all' }}>
+              <b style={{ color: colors[1], fontWeight: 700 }}>Pass: </b> {data.pass}
+            </span>
+            <span style={{ fontSize: '10px', color: '#666', fontFamily: 'monospace', fontWeight: 500, wordBreak: 'break-all' }}>
+              <b style={{ color: colors[1], fontWeight: 700 }}>Owner: </b> {data.owner}
+            </span>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: '100%', height: '1px', background: '#e0e0e0', margin: '0 0 20px 0', borderRadius: '1px' }} />
+
+          {/* Total Points Earned */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
+            padding: '20px',
+            borderRadius: '12px',
+            marginBottom: '20px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            border: `1px solid ${colors[1]}22`
+          }}>
+            <h3 style={{ fontSize: '16px', margin: '0 0 8px 0', color: '#333', fontWeight: 700 }}>Total Points Earned</h3>
+            <span style={{ 
+              fontSize: '32px', 
+              fontWeight: 'bold', 
+              color: '#333',
+              fontFamily: 'Press Start 2P',
+              textShadow: `0 0 8px ${colors[1]}55`
+            }}>{this.formatNumber(data.xp)} XP</span>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: '100%', height: '1px', background: '#e0e0e0', margin: '0 0 20px 0', borderRadius: '1px' }} />
+
+          {/* Progress Bar */}
           <div style={{ 
             display: 'flex', 
-            flex: 1, 
             flexDirection: 'column', 
-            justifyContent: 'center',
+            marginBottom: '20px',
             width: '100%'
           }}>
-            <h2 style={{ fontSize: '24px', margin: '0 0 10px 0', color: '#444' }}>{data.name}</h2>
-            <p style={{ fontSize: '16px', color: '#666', margin: '0 0 20px 0' }}>
-              {data.pass.slice(0, 6)}...{data.pass.slice(-6)}
-            </p>
-
-            {/* Progress Bar */}
             <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              marginBottom: '10px',
+              display: 'flex',
+              background: '#f0f0f0',
+              height: '20px', 
+              borderRadius: '10px',
+              overflow: 'hidden',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
               width: '100%'
             }}>
               <div style={{ 
                 display: 'flex',
-                background: '#f0f0f0',
-                height: '20px', 
-                borderRadius: '10px',
-                overflow: 'hidden',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-                width: '100%'
-              }}>
-                <div style={{ 
-                  display: 'flex',
-                  background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`,
-                  width: `${progress}%`, 
-                  height: '100%',
-                  transition: 'width 0.3s ease',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }} />
-              </div>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                marginTop: '5px',
-                fontSize: '14px',
-                color: '#666',
-                width: '100%'
-              }}>
-                <span>{data.xp} XP</span>
-                <span>{nextTier.name}: {nextTier.xpRequired} XP</span>
-              </div>
+                background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`,
+                width: `${progress}%`, 
+                height: '100%',
+                transition: 'width 0.3s ease',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }} />
+            </div>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              marginTop: '8px',
+              fontSize: '12px',
+              color: '#666',
+              width: '100%'
+            }}>
+              <span>Last Action: {data.lastAction || 'None'}</span>
+              <span>Next Tier: {nextTier.name}: {nextTier.xpRequired} XP</span>
             </div>
           </div>
 
-          {/* Footer */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            marginTop: '20px',
-            fontSize: '14px',
-            color: '#666',
-            borderTop: '1px solid #eee',
-            paddingTop: '20px',
-            width: '100%'
-          }}>
-            <span>Member since {new Date().toLocaleDateString()}</span>
-            <span>ID: {data.owner.slice(0, 6)}...{data.owner.slice(-6)}</span>
+          {/* Divider */}
+          <div style={{ width: '100%', height: '1px', background: '#e0e0e0', margin: '0 0 20px 0', borderRadius: '1px' }} />
+
+          {/* QR Row and Footer */}
+          <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginTop: 'auto', gap: '8px' }}>
+            {/* QR Row */}
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              width: '100%',
+              background: `linear-gradient(135deg, #fff, ${colors[0]})`,
+              padding: '16px',
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              border: `1px solid ${colors[1]}22`
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px', color: '#bbb' }}>👥</span>
+                <span style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>Scan to view loyalty details</span>
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                background: 'white', 
+                padding: '6px', 
+                borderRadius: '8px', 
+                boxShadow: '0 2px 8px #0001',
+                border: `1px solid ${colors[1]}22`
+              }}>
+                <img
+                  src={qrCodeDataUrl}
+                  alt="QR Code"
+                  style={{ width: '60px', height: '60px' }}
+                />
+              </div>
+            </div>
+            {/* Footer */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              width: '100%',
+              fontSize: '10px',
+              color: '#888',
+              fontWeight: 400,
+              letterSpacing: '0.5px',
+              borderTop: '1px solid #eee',
+              paddingTop: '12px'
+            }}>
+              <span>Member since {new Date().toLocaleDateString()}</span>
+              <span>Powered by Verxio Protocol</span>
+            </div>
           </div>
         </div>
       </div>
