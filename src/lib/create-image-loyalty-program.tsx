@@ -1,5 +1,6 @@
 import { Builder, Font, FontFactory } from 'canvacord'
 import QRCode from 'qrcode'
+import { formatNumber } from '../utils.js'
 
 interface LoyaltyProgramData {
   name: string
@@ -16,6 +17,7 @@ interface LoyaltyProgramData {
   metadata: {
     organizationName: string
     brandColor?: string
+    qrCodeUrl?: string
   }
   creator: string
 }
@@ -26,7 +28,7 @@ class CreateImageLoyaltyProgram extends Builder {
       data: LoyaltyProgramData
     },
   ) {
-    super(450, 600)
+    super(500, 500)
     if (!FontFactory.size) Font.loadDefault()
   }
 
@@ -41,18 +43,12 @@ class CreateImageLoyaltyProgram extends Builder {
     return [lighter, brandColor, darker]
   }
 
-  private formatNumber(num: number): string {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(0)}M`
-    if (num >= 100000) return `${(num / 1000).toFixed(0)}K`
-    return num.toLocaleString()
-  }
-
   async render() {
     const { data } = this.vars
     const colors = this.getGradientColors(data.metadata.brandColor || '#8aec25')
-    const qrCodeUrl = `https://verxio.xyz/${data.collectionAddress}`
+    const qrCodeUrl = data.metadata.qrCodeUrl || `https://verxio.xyz/program/${data.collectionAddress}`
     const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
-      width: 80,
+      width: 120,
       margin: 1,
       color: { dark: '#000000', light: '#ffffff' }
     })
@@ -61,11 +57,11 @@ class CreateImageLoyaltyProgram extends Builder {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          width: '450px',
-          height: '600px',
+          width: '500px',
+          height: '500px',
           background: 'linear-gradient(135deg, #f8fafc 0%, #e6e9f0 100%)',
           borderRadius: '20px',
-          padding: '30px',
+          padding: '20px',
           color: '#222',
           fontFamily: 'Arial, sans-serif',
           boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
@@ -97,13 +93,13 @@ class CreateImageLoyaltyProgram extends Builder {
           width: '100%'
         }}>
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', width: '100%' }}>
             {/* Program Name and Organization */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
               <span style={{
                 fontFamily: 'Press Start 2P',
-                margin: '0 0 8px 0',
-                fontSize: '26px',
+                margin: '0 0 6px 0',
+                fontSize: '22px',
                 color: colors[1],
                 textShadow: `0 0 8px ${colors[1]}55`,
                 letterSpacing: '1px',
@@ -113,7 +109,7 @@ class CreateImageLoyaltyProgram extends Builder {
                 maxWidth: '250px'
               }}>{data.name}</span>
               <span style={{
-                fontSize: '15px',
+                fontSize: '13px',
                 color: '#666',
                 marginTop: '2px',
                 fontWeight: 600,
@@ -127,13 +123,13 @@ class CreateImageLoyaltyProgram extends Builder {
               display: 'flex',
               background: colors[1],
               color: 'white',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              fontSize: '14px',
+              padding: '6px 12px',
+              borderRadius: '16px',
+              fontSize: '12px',
               fontWeight: 600,
               boxShadow: `0 4px 10px ${colors[1]}22`
             }}>
-              {this.formatNumber(data.numMinted)} Members
+              {formatNumber(data.numMinted)} Members
             </div>
           </div>
 
@@ -144,15 +140,15 @@ class CreateImageLoyaltyProgram extends Builder {
             gap: '2px',
             background: 'rgba(240,240,255,0.7)',
             borderRadius: '10px',
-            padding: '10px 14px',
-            marginBottom: '12px',
+            padding: '10px 12px',
+            marginBottom: '14px',
             border: `1px solid ${colors[1]}22`,
             boxShadow: '0 1px 4px #0001',
           }}>
-            <span style={{ fontSize: '10px', color: '#666', fontFamily: 'monospace', fontWeight: 500, wordBreak: 'break-all' }}>
+            <span style={{ fontSize: '9px', color: '#666', fontFamily: 'monospace', fontWeight: 500, wordBreak: 'break-all' }}>
               <b style={{ color: colors[1], fontWeight: 700 }}>Creator: </b> {data.creator}
             </span>
-            <span style={{ fontSize: '10px', color: '#666', fontFamily: 'monospace', fontWeight: 500, wordBreak: 'break-all' }}>
+            <span style={{ fontSize: '9px', color: '#666', fontFamily: 'monospace', fontWeight: 500, wordBreak: 'break-all' }}>
               <b style={{ color: colors[1], fontWeight: 700 }}>Collection: </b> {data.collectionAddress}
             </span>
           </div>
@@ -164,28 +160,31 @@ class CreateImageLoyaltyProgram extends Builder {
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            marginBottom: '24px',
+            marginBottom: '14px',
             width: '100%'
           }}>
-            <h3 style={{ fontSize: '18px', margin: '0 0 12px 0', color: colors[1], fontWeight: 700 }}>Points System</h3>
-            <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+            <h3 style={{ fontSize: '14px', margin: '0 0 8px 0', color: colors[1], fontWeight: 700 }}>Points System</h3>
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
               {Object.entries(data.pointsPerAction).map(([action, points]) => (
                 <div key={action} style={{
                   display: 'flex',
                   flexDirection: 'column',
                   background: '#fff',
-                  padding: '12px',
+                  padding: '10px',
                   borderRadius: '10px',
                   flex: 1,
                   boxShadow: '0 2px 8px #0001',
                   border: `1px solid ${colors[0]}`
                 }}>
-                  <span style={{ fontSize: '14px', textTransform: 'capitalize', color: '#666', fontWeight: 500 }}>{action}</span>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: colors[1], fontFamily: 'Press Start 2P' }}>{points} XP</span>
+                  <span style={{ fontSize: '12px', textTransform: 'capitalize', color: '#666', fontWeight: 500 }}>{action}</span>
+                  <span style={{ fontSize: '16px', fontWeight: 'bold', color: colors[1], fontFamily: 'Press Start 2P' }}>{points} XP</span>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Divider */}
+          <div style={{ width: '100%', height: '1px', background: '#e0e0e0', margin: '0 0 14px 0', borderRadius: '1px' }} />
 
           {/* Tiers */}
           <div style={{
@@ -193,14 +192,14 @@ class CreateImageLoyaltyProgram extends Builder {
             flexDirection: 'column',
             width: '100%'
           }}>
-            <h3 style={{ fontSize: '18px', margin: '0 0 12px 0', color: colors[1], fontWeight: 700 }}>Reward Tiers</h3>
-            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+            <h3 style={{ fontSize: '14px', margin: '0 0 8px 0', color: colors[1], fontWeight: 700 }}>Reward Tiers</h3>
+            <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
               {data.tiers.map((tier) => (
                 <div key={tier.name} style={{
                   display: 'flex',
                   flexDirection: 'column',
                   background: '#fff',
-                  padding: '12px',
+                  padding: '10px',
                   borderRadius: '10px',
                   flex: 1,
                   boxShadow: '0 2px 8px #0001',
@@ -210,23 +209,31 @@ class CreateImageLoyaltyProgram extends Builder {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '8px',
+                    marginBottom: '6px',
                     width: '100%'
                   }}>
-                    <span style={{ fontSize: '15px', fontWeight: 'bold', color: colors[1] }}>{tier.name}</span>
-                    <span style={{ fontSize: '12px', color: '#666' }}>{tier.xpRequired} XP</span>
+                    <span style={{ fontSize: '13px', fontWeight: 'bold', color: colors[1] }}>{tier.name}</span>
+                    <span style={{ fontSize: '11px', color: '#666' }}>{tier.xpRequired} XP</span>
                   </div>
                   <ul style={{
                     display: 'flex',
                     flexDirection: 'column',
                     margin: 0,
-                    padding: '0 0 0 18px',
-                    fontSize: '12px',
+                    padding: '0 0 0 14px',
+                    fontSize: '11px',
                     color: '#666',
                     width: '100%'
                   }}>
                     {tier.rewards.map((reward, i) => (
-                      <li key={i} style={{ display: 'flex' }}>{reward}</li>
+                      <li key={i} style={{ 
+                        marginBottom: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <span style={{ color: colors[1] }}>•</span>
+                        {reward}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -235,24 +242,52 @@ class CreateImageLoyaltyProgram extends Builder {
           </div>
 
           {/* QR Row and Footer */}
-          <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginTop: 'auto', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginTop: 'auto', gap: '6px' }}>
             {/* QR Row */}
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px', color: '#bbb' }}>👥</span>
-                <span style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>Scan to join loyalty program</span>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              width: '100%',
+              background: `linear-gradient(135deg, #fff, ${colors[0]})`,
+              padding: '10px',
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              border: `1px solid ${colors[1]}22`
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '6px', flex: 1 }}>
+                <span style={{ fontSize: '16px', color: '#bbb' }}>👥</span>
+                <span style={{ fontSize: '12px', color: '#888', fontWeight: 500 }}>Scan to join loyalty program</span>
               </div>
-              <div style={{ display: 'flex', background: 'white', padding: '6px', borderRadius: '8px', boxShadow: '0 2px 8px #0001' }}>
+              <div style={{ 
+                display: 'flex', 
+                background: 'white', 
+                padding: '3px', 
+                borderRadius: '6px', 
+                boxShadow: '0 2px 8px #0001',
+                border: `1px solid ${colors[1]}22`,
+                flexShrink: 0
+              }}>
                 <img
                   src={qrCodeDataUrl}
                   alt="QR Code"
-                  style={{ width: '60px', height: '60px' }}
+                  style={{ width: '55px', height: '55px' }}
                 />
               </div>
             </div>
             {/* Footer */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-              <span style={{ fontSize: '10px', color: '#888', fontWeight: 400, letterSpacing: '0.5px' }}>Powered by Verxio Protocol</span>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              width: '100%',
+              fontSize: '9px',
+              color: '#888',
+              fontWeight: 400,
+              letterSpacing: '0.5px'
+            }}>
+              <span>Powered by Verxio Protocol</span>
             </div>
           </div>
         </div>
